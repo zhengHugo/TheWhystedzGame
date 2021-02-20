@@ -2,13 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Mirror;
 
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
     [SerializeField]
     private float movementSpeed = 3f;
     private Vector3 rawInputMovement;
-    private Vector3 smoothInputMovement;
 
     private CharacterController characterController = null;
 
@@ -19,7 +19,8 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        UpdatePlayerMovement();
+        if(base.hasAuthority)
+            UpdatePlayerMovement();
     }
 
     public void OnMovement(InputAction.CallbackContext value)

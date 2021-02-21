@@ -9,6 +9,9 @@ using System.Text;
 public class Match 
 {
     public string matchID;
+    public bool publicMatch;
+    public bool inMatch;
+    public bool matchFull;
     public SyncListGameObject players = new SyncListGameObject();
 
     public Match(string matchID, GameObject player)
@@ -38,13 +41,15 @@ public class MatchMaker : NetworkBehaviour
         instance = this;
     }
 
-    public bool HostGame(string _matchID, GameObject _player, out int playerIndex)
+    public bool HostGame(string _matchID, GameObject _player, bool publicMatch, out int playerIndex)
     {
         playerIndex = -1;
         if (!matchIDs.Contains(_matchID))
         {
             matchIDs.Add(_matchID);
-            matches.Add(new Match(_matchID, _player));
+            Match match = new Match(_matchID, _player);
+            match.publicMatch = publicMatch;
+            matches.Add(match);
             Debug.Log($"Match generated");
             playerIndex = 1;
             return true;
@@ -79,6 +84,25 @@ public class MatchMaker : NetworkBehaviour
             Debug.Log($"Match ID does not exist");
             return false;
         }
+    }
+
+    public bool SearchGame(GameObject _player, out int playerIndex, out string matchID)
+    {
+        playerIndex = -1;
+        matchID = string.Empty;
+        
+        for(int i = 0; i < matches.Count; i++)
+        {
+            if(matches[i].publicMatch && !matches[i].matchFull && !matches[i].inMatch)
+            {
+                matchID = matches[i].matchID;
+                if(JoinGame(matchID, _player, out playerIndex))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public void StartGame(string _matchID)

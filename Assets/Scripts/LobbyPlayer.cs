@@ -27,25 +27,25 @@ public class LobbyPlayer : NetworkBehaviour
 
     //---- HOST GAME LOGIC ----
 
-    public void HostGame()
+    public void HostGame(bool publicMatch)
     {
         string matchID = MatchMaker.GetRandomMatchID();
-        CmdHostGame(matchID);
+        CmdHostGame(matchID, publicMatch);
     }
 
     [Command]
-    void CmdHostGame(string _matchID)
+    void CmdHostGame(string _matchID, bool publicMatch)
     {
-        if (MatchMaker.instance.HostGame(_matchID, gameObject, out playerIndex))
+        if (MatchMaker.instance.HostGame(_matchID, gameObject, publicMatch, out playerIndex))
         {
             matchID = _matchID;
-            Debug.Log($"<color = green>Game hosted successfully</color>");
+            Debug.Log($"<color=green>Game hosted successfully</color>");
             networkMatchChecker.matchId = _matchID.ToGuid();
             TargetHostGame(true, _matchID, playerIndex);
         }
         else
         {
-            Debug.Log($"<color = red>Game host failed</color>");
+            Debug.Log($"<color=red>Game host failed</color>");
             TargetHostGame(false, _matchID, playerIndex);
         }
     }
@@ -71,13 +71,13 @@ public class LobbyPlayer : NetworkBehaviour
         if (MatchMaker.instance.JoinGame(_matchID, gameObject, out playerIndex))
         {
             matchID = _matchID;
-            Debug.Log($"<color = green>Game joined successfully</color>");
+            Debug.Log($"<color=green>Game joined successfully</color>");
             networkMatchChecker.matchId = _matchID.ToGuid();
             TargetJoinGame(true, _matchID, playerIndex);
         }
         else
         {
-            Debug.Log($"<color = red>Game join failed</color>");
+            Debug.Log($"<color=red>Game join failed</color>");
             TargetJoinGame(false, _matchID, playerIndex);
         }
     }
@@ -91,6 +91,38 @@ public class LobbyPlayer : NetworkBehaviour
         UILobby.instance.JoinSuccess(success, _matchID);
     }
 
+    //---- SEARCH GAME LOGIC ----
+
+    public void SearchGame()
+    {
+        CmdSearchGame();
+    }
+
+    [Command]
+    public void CmdSearchGame()
+    {
+        if (MatchMaker.instance.SearchGame(gameObject, out playerIndex, out matchID))
+        {
+            Debug.Log($"<color=green>Game found</color>");
+            networkMatchChecker.matchId = matchID.ToGuid();
+            TargetSearchGame(true, matchID, playerIndex);
+        }
+        else
+        {
+            Debug.Log($"<color=red>Game not found</color>");
+            TargetSearchGame(false, matchID, playerIndex);
+        }
+    }
+
+    [TargetRpc]
+    public void TargetSearchGame(bool success, string _matchID, int _playerIndex)
+    {
+        playerIndex = _playerIndex;
+        matchID = _matchID;
+        Debug.Log($"Match ID: {matchID} == {_matchID}");
+        UILobby.instance.SearchSuccess(success, _matchID);
+    }
+
     //---- START GAME LOGIC ----
 
     public void StartGame()
@@ -102,7 +134,7 @@ public class LobbyPlayer : NetworkBehaviour
     void CmdStartGame()
     {
         MatchMaker.instance.StartGame(matchID);
-        Debug.Log($"<color = red>Game starting</color>");
+        Debug.Log($"<color=red>Game starting</color>");
     }
 
     public void StartMatch()

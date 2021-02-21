@@ -10,19 +10,36 @@ public class LobbyPlayer : NetworkBehaviour
     [SyncVar] public string matchID;
     [SyncVar] public int playerIndex;
     NetworkMatchChecker networkMatchChecker;
+    GameObject playerLobbyUI;
 
-    void Start()
+    void Awake()
     {
         networkMatchChecker = GetComponent<NetworkMatchChecker>();
+    }
 
+    public override void OnStartClient()
+    {
         if (isLocalPlayer)
         {
             localPlayer = this;
         }
         else
         {
-            UILobby.instance.SpawnUIPlayerPrefab(this);
+            Debug.Log($"Spawning other player UI");
+            playerLobbyUI = UILobby.instance.SpawnUIPlayerPrefab(this);
         }
+    }
+
+    public override void OnStopClient()
+    {
+        Debug.Log($"Client stopped");
+        ClientDisconnect();
+    }
+
+    public override void OnStopServer()
+    {
+        Debug.Log($"Client stopped on server");
+        ServerDisconnect();
     }
 
     //---- HOST GAME LOGIC ----
@@ -148,5 +165,37 @@ public class LobbyPlayer : NetworkBehaviour
         Debug.Log($"Match ID: {matchID} | Starting...");
         // Load game scene
         SceneManager.LoadScene(2);
+    }
+
+    //---- DISCONNECT LOGIC ----
+
+    public void DisconnectGame()
+    {
+        CmdDisconnectGame();
+    }
+
+    [Command]
+    public void CmdDisconnectGame()
+    {
+        ServerDisconnect();
+    }
+
+    void ServerDisconnect()
+    {
+        MatchMaker.instance.PlayerDisconnected(this, matchID);
+        networkMatchChecker.matchId = string.Empty.ToGuid();
+        RpcDisconnectGame();
+    }
+
+    [ClientRpc]
+    void RpcDisconnectGame()
+    {
+        ClientDisconnect();
+    }
+
+    void ClientDisconnect()
+    {
+        if(playerLobbyUI != null)
+            Destroy(playerLobbyUI);
     }
 }

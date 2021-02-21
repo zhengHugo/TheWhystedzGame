@@ -20,6 +20,8 @@ public class UILobby : MonoBehaviour
     [SerializeField] TMP_Text matchIDText;
     [SerializeField] GameObject startGameButton;
 
+    GameObject playerLobbyUI;
+
     bool searching = false;
 
     void Start()
@@ -51,7 +53,9 @@ public class UILobby : MonoBehaviour
         if (success)
         {
             lobbyCanvas.enabled = true;
-            SpawnUIPlayerPrefab(LobbyPlayer.localPlayer);
+            if (playerLobbyUI != null)
+                Destroy(playerLobbyUI);
+            playerLobbyUI = SpawnUIPlayerPrefab(LobbyPlayer.localPlayer);
             matchIDText.text = matchID;
             startGameButton.SetActive(true);
         }
@@ -75,7 +79,9 @@ public class UILobby : MonoBehaviour
         if (success)
         {
             lobbyCanvas.enabled = true;
-            SpawnUIPlayerPrefab(LobbyPlayer.localPlayer);
+            if (playerLobbyUI != null)
+                Destroy(playerLobbyUI);
+            playerLobbyUI = SpawnUIPlayerPrefab(LobbyPlayer.localPlayer);
             matchIDText.text = matchID;
         }
         else
@@ -85,11 +91,12 @@ public class UILobby : MonoBehaviour
         }
     }
 
-    public void SpawnUIPlayerPrefab(LobbyPlayer player)
+    public GameObject SpawnUIPlayerPrefab(LobbyPlayer player)
     {
         GameObject newUIPlayer = Instantiate(UIPlayerPrefab, UIPlayerParent);
         newUIPlayer.GetComponent<UIPlayer>().SetPlayer(player);
         newUIPlayer.transform.SetSiblingIndex(player.playerIndex - 1);
+        return newUIPlayer;
     }
 
     public void StartGame()
@@ -100,14 +107,17 @@ public class UILobby : MonoBehaviour
     public void SearchGame()
     {
         Debug.Log($"Searching for game...");
-        searchCanvas.enabled = true;
         StartCoroutine(SearchingForGame());
     }
 
     IEnumerator SearchingForGame()
     {
+        searchCanvas.enabled = true;
+
         searching = true;
+        float searchInterval = 1f;
         float currentTime = 1f;
+        
         while(searching)
         {
             if (currentTime > 0)
@@ -116,11 +126,13 @@ public class UILobby : MonoBehaviour
             }
             else
             {
-                currentTime = 1f;
+                currentTime = searchInterval;
                 LobbyPlayer.localPlayer.SearchGame();
             }
             yield return null;
         }
+
+        searchCanvas.enabled = false;
     }
 
     public void SearchSuccess(bool success, string matchID)
@@ -128,15 +140,24 @@ public class UILobby : MonoBehaviour
         if (success)
         {
             searchCanvas.enabled = false;
-            JoinSuccess(success, matchID);
             searching = false;
+            JoinSuccess(success, matchID);
         }
     }
 
     public void SearchCancel()
     {
-        searchCanvas.enabled = false;
         searching = false;
+    }
+
+    public void DisconnectLobby()
+    {
+        if (playerLobbyUI != null)
+            Destroy(playerLobbyUI);
+        LobbyPlayer.localPlayer.DisconnectGame();
+
+        lobbyCanvas.enabled = false;
         lobbySelectables.ForEach(x => x.interactable = true);
+        startGameButton.SetActive(false);
     }
 }

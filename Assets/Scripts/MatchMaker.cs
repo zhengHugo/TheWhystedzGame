@@ -90,7 +90,7 @@ public class MatchMaker : NetworkBehaviour
     {
         playerIndex = -1;
         matchID = string.Empty;
-        
+
         for(int i = 0; i < matches.Count; i++)
         {
             if(matches[i].publicMatch && !matches[i].matchFull && !matches[i].inMatch)
@@ -146,6 +146,27 @@ public class MatchMaker : NetworkBehaviour
         }
 
         return id;
+    }
+
+    public void PlayerDisconnected(LobbyPlayer player, string _matchID)
+    {
+        for (int i = 0; i < matches.Count; i++)
+        {
+            if(matches[i].matchID == _matchID)
+            {
+                int playerIndex = matches[i].players.IndexOf(player.gameObject);
+                matches[i].players.RemoveAt(playerIndex);
+                Debug.Log($"Player disconnected from match {_matchID} | {matches[i].players.Count} players remainig");
+
+                if (matches[i].players.Count == 0)
+                {
+                    Debug.Log($"No more players in match. Terminating {_matchID}");
+                    matches.RemoveAt(i);
+                    matchIDs.Remove(_matchID);
+                }
+                break;
+            }
+        }
     }
 }
 

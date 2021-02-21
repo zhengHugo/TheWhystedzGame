@@ -115,6 +115,6 @@ public class LobbyPlayer : NetworkBehaviour
     {
         Debug.Log($"Match ID: {matchID} | Starting...");
         // Load game scene
-        SceneManager.LoadScene(2, LoadSceneMode.Additive);
+        SceneManager.LoadScene(2);
     }
 }

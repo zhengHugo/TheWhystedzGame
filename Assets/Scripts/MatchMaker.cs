@@ -96,7 +96,7 @@ public class MatchMaker : NetworkBehaviour
                 {
                     LobbyPlayer _player = player.GetComponent<LobbyPlayer>();
                     turnManager.AddPlayer(_player);
-                    _player.StartGame();
+                    _player.StartMatch();
                 }
                 break;
             }
